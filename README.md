@@ -1,4 +1,5 @@
 # wg-gesucht-scraper
+A simple WG gesucht scraper to save messages of a profile in Firebase. This scraper was developed to create the database for the [flatrate tool](https://github.com/tillhoffmann1411/flatrate).
 
 ## 🚀 Setup
 1. run `npm i`
