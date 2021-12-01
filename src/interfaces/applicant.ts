@@ -1,15 +1,17 @@
-export default interface Applicant {
+export default interface IApplicant {
     name: string,
     text: string,
-    gender: string,
+    gender?: string,
     when: number,
     imageUrl: string,
+    wggId: string | undefined,
     id: string,
     note: string,
-    wggId: string;
     ratings: {
         "till": number,
         "maike": number,
-        "max": number
+        "max": number,
+        "emily": number
     }
+    status?: 'rejected' | 'open' | 'invited' | 'accepted',
 }
