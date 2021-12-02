@@ -1,4 +1,4 @@
-import Applicant from './interfaces/applicant';
+import { IApplicant } from './interfaces/applicant';
 import { initFirebase } from './firebase';
 import WgGesucht from './scraper';
 import admin from 'firebase-admin';
@@ -6,12 +6,15 @@ import dotenv from 'dotenv';
 import express, { Router } from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
+import { createApplicant, generateMockApplicant, generateMultipleMockApplicants, getApartment } from './mock-data';
 
 dotenv.config();
 const ENV = {
   email: process.env.WGG_EMAIL,
   password: process.env.WGG_PASSWORD,
-  dbUrl: process.env.FIREBASE_DB_URL
+  dbUrl: process.env.FIREBASE_DB_URL,
+  apartmentId: process.env.APARTMENT_ID,
+  nrMocks: process.env.NR_MOCKS
 }
 
 const app = express();
@@ -29,9 +32,9 @@ const startSynchronizing = (req, res) =>{
   const password = reqPassword ? reqPassword : ENV.password;
 
   if (email && password && ENV.dbUrl) {
-    const firebase = initFirebase(ENV.dbUrl);
+    const dbs = initFirebase(ENV.dbUrl);
     const wgGesucht = new WgGesucht();
-    sync(firebase, wgGesucht, email, password, (error) => {
+    sync(dbs.realtimeDatabase, wgGesucht, email, password, (error) => {
       if (!error) {
         res.send({ message: 'Successfully synchronised' });
       } else {
@@ -43,9 +46,9 @@ const startSynchronizing = (req, res) =>{
 
 function sync(db: admin.database.Database, wgGesucht: WgGesucht, email: string, password: string, resCb: (error: boolean) => void): void {
   db.ref("applicants").orderByChild('when').on("value", async (snapshot: admin.database.DataSnapshot) => {
-    const lastApplicants: Applicant[] = [];
+    const lastApplicants: IApplicant[] = [];
     snapshot.forEach((applicantSnap: admin.database.DataSnapshot) => {
-      lastApplicants.push(applicantSnap.val() as Applicant);
+      lastApplicants.push(applicantSnap.val() as IApplicant);
     });
     
     try {
@@ -67,11 +70,15 @@ function sync(db: admin.database.Database, wgGesucht: WgGesucht, email: string, 
   });
 }
 
-app.listen(8080, () => {
+app.listen(8080, async () => {
   app.use(bodyParser.urlencoded({ extended: true }));
   app.use(express.json());
   app.use(cors());
-  Router().post('/', startSynchronizing);
+  // Router().post('/', startSynchronizing);
+  if (ENV.dbUrl && ENV.apartmentId && ENV.nrMocks && parseInt(ENV.nrMocks) > 0) {
+    const dbs = initFirebase(ENV.dbUrl);
+    await generateMultipleMockApplicants(70, ENV.apartmentId, dbs.firestore);
+  }
   console.log('listening on port 8080!');
 });
 

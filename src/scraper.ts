@@ -1,8 +1,7 @@
 import { Browser, Builder, By, Key, until, WebDriver, WebElement } from 'selenium-webdriver';
 import chrome from 'selenium-webdriver/chrome';
-import Applicant from './interfaces/applicant';
 import admin from 'firebase-admin';
-import IApplicant from './interfaces/applicant';
+import { IApplicant } from './interfaces/applicant';
 
 
 class WgGesucht {
@@ -42,8 +41,8 @@ class WgGesucht {
     await this.driver.sleep(1000);
   }
 
-  async getMessageAfter(dbApplicants: Applicant[], db: admin.database.Database): Promise<void> {
-    const dbApplMap: Map<string, Applicant> = new Map();
+  async getMessageAfter(dbApplicants: IApplicant[], db: admin.database.Database): Promise<void> {
+    const dbApplMap: Map<string, IApplicant> = new Map();
     dbApplicants.forEach((applicant) => applicant.wggId ? dbApplMap.set(applicant.wggId.toString(), applicant) : undefined);
 
     await this.driver.get('https://www.wg-gesucht.de/nachrichten.html');
@@ -80,7 +79,7 @@ class WgGesucht {
     console.log('all new applicants:', applicants.length);
   }
 
-  private async extractInfos(element: WebElement, wggId: string): Promise<Applicant> {
+  private async extractInfos(element: WebElement, wggId: string): Promise<IApplicant> {
     const text = await element.findElement(By.css('div.latest_message')).getText();
     const name = (await element.findElement(By.css('div.contacted_user_public_name')).getText()).replace('NEU', '');
     let imageUrl = await element.findElement(By.css('div.img-circle.img-conversation-list')).getCssValue("background-image");
@@ -105,7 +104,7 @@ class WgGesucht {
     }
   }
 
-  private async createApplicant(appl: Applicant, db: admin.database.Database): Promise<Applicant> {
+  private async createApplicant(appl: IApplicant, db: admin.database.Database): Promise<IApplicant> {
     const ref = db.ref('applicants');
     const newRef = ref.push();
     const key = newRef.key;
